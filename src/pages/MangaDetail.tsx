@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Navbar from '@/components/layout/Navbar';
+import { useMangaBySlug, useChaptersByManga } from '@/hooks/useManga';
 import { 
   Heart, 
   Bookmark, 
@@ -21,39 +22,7 @@ import {
   Play
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-
-// Mock data - in real app this would come from API/database
-const mockManga = {
-  id: '1',
-  title: 'Solo Leveling',
-  slug: 'solo-leveling',
-  coverImage: '/placeholder.svg',
-  description: 'In a world where hunters battle deadly monsters that emerge from gates connecting our world to other dimensions, Sung Jin-Woo is known as the weakest E-rank hunter. Despite his low rank, he continues to hunt monsters to pay for his mother\'s medical bills. During a seemingly routine dungeon raid, Jin-Woo and his party discover a hidden dungeon. When they enter, they find themselves trapped in a deadly situation. Most of the party is killed, but Jin-Woo awakens to find that he has been chosen by a mysterious system that grants him the power to level up his abilities, strength, and skills.',
-  author: 'Chugong',
-  artist: 'DUBU (REDICE STUDIO)',
-  status: 'completed' as 'completed' | 'ongoing' | 'hiatus' | 'cancelled',
-  rating: 4.9,
-  viewCount: 5200000,
-  genres: ['Action', 'Adventure', 'Fantasy', 'Supernatural', 'Webtoon'],
-  tags: ['Leveling', 'Monsters', 'Powers', 'Strong MC'],
-  publishedAt: '2018-07-25',
-  updatedAt: '2021-12-29',
-  totalChapters: 179,
-  isBookmarked: false,
-  isFavorited: true
-};
-
-const mockChapters = Array.from({ length: 179 }, (_, i) => ({
-  id: `ch-${i + 1}`,
-  number: i + 1,
-  title: i === 0 ? 'The World\'s Weakest Hunter' : 
-         i === 1 ? 'The Double Dungeon' :
-         i === 178 ? 'The End of a Long Journey' : 
-         `Chapter ${i + 1}`,
-  publishedAt: new Date(Date.now() - (178 - i) * 24 * 60 * 60 * 1000).toISOString(),
-  readProgress: Math.random() > 0.7 ? Math.floor(Math.random() * 100) : 0
-})).reverse();
-
+// Mock comments - replace with actual API calls
 const mockComments = [
   {
     id: '1',
@@ -87,9 +56,48 @@ const mockComments = [
 const MangaDetail = () => {
   const { slug } = useParams();
   const { user } = useAuth();
-  const [isBookmarked, setIsBookmarked] = useState(mockManga.isBookmarked);
-  const [isFavorited, setIsFavorited] = useState(mockManga.isFavorited);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
   const [newComment, setNewComment] = useState('');
+  
+  const { data: manga, isLoading: mangaLoading, error: mangaError } = useMangaBySlug(slug!);
+  const { data: chapters = [], isLoading: chaptersLoading } = useChaptersByManga(manga?.id || '');
+
+  if (mangaError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-red-500">
+            Error loading manga: {mangaError.message}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (mangaLoading || !manga) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-300 rounded w-1/3 mb-4"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-1">
+                <div className="aspect-[3/4] bg-gray-300 rounded-lg"></div>
+              </div>
+              <div className="lg:col-span-2 space-y-4">
+                <div className="h-6 bg-gray-300 rounded w-2/3"></div>
+                <div className="h-4 bg-gray-300 rounded w-full"></div>
+                <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleBookmark = () => {
     if (!user) {
@@ -103,7 +111,7 @@ const MangaDetail = () => {
     setIsBookmarked(!isBookmarked);
     toast({
       title: isBookmarked ? "Removed from bookmarks" : "Added to bookmarks",
-      description: `${mockManga.title} ${isBookmarked ? 'removed from' : 'added to'} your bookmarks`
+      description: `${manga.title} ${isBookmarked ? 'removed from' : 'added to'} your bookmarks`
     });
   };
 
@@ -119,7 +127,7 @@ const MangaDetail = () => {
     setIsFavorited(!isFavorited);
     toast({
       title: isFavorited ? "Removed from favorites" : "Added to favorites",
-      description: `${mockManga.title} ${isFavorited ? 'removed from' : 'added to'} your favorites`
+      description: `${manga.title} ${isFavorited ? 'removed from' : 'added to'} your favorites`
     });
   };
 
@@ -160,7 +168,7 @@ const MangaDetail = () => {
           <ChevronRight className="h-4 w-4" />
           <Link to="/library" className="hover:text-primary">Library</Link>
           <ChevronRight className="h-4 w-4" />
-          <span className="text-foreground">{mockManga.title}</span>
+          <span className="text-foreground">{manga.title}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -169,8 +177,8 @@ const MangaDetail = () => {
             <div className="manga-card">
               <div className="aspect-[3/4] overflow-hidden">
                 <img
-                  src={mockManga.coverImage}
-                  alt={mockManga.title}
+                  src={manga.cover_image_url || '/placeholder.svg'}
+                  alt={manga.title}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -212,17 +220,17 @@ const MangaDetail = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Title and Meta */}
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">{mockManga.title}</h1>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">{manga.title}</h1>
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
-                <span>by {mockManga.author}</span>
-                {mockManga.artist && <span>Art by {mockManga.artist}</span>}
+                <span>by {manga.author}</span>
+                {manga.artist && <span>Art by {manga.artist}</span>}
                 <div className="flex items-center gap-1">
                   <Eye className="h-4 w-4" />
-                  <span>{mockManga.viewCount.toLocaleString()} views</span>
+                  <span>{manga.view_count?.toLocaleString()} views</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                  <span>{mockManga.rating}/5</span>
+                  <span>{manga.rating}/5</span>
                 </div>
               </div>
 
@@ -230,20 +238,20 @@ const MangaDetail = () => {
               <div className="flex flex-wrap items-center gap-2 mb-4">
                 <Badge 
                   variant="secondary"
-                  className={mockManga.status === 'ongoing' ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'}
+                  className={manga.status === 'ongoing' ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'}
                 >
-                  {mockManga.status}
+                  {manga.status}
                 </Badge>
-                <Badge variant="outline">{mockManga.totalChapters} chapters</Badge>
+                <Badge variant="outline">{chapters.length} chapters</Badge>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  <span>Updated {new Date(mockManga.updatedAt).toLocaleDateString()}</span>
+                  <span>Updated {new Date(manga.updated_at).toLocaleDateString()}</span>
                 </div>
               </div>
 
               {/* Genres */}
               <div className="flex flex-wrap gap-2 mb-6">
-                {mockManga.genres.map((genre) => (
+                {manga.genres?.map((genre) => (
                   <Badge key={genre} variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
                     {genre}
                   </Badge>
@@ -252,7 +260,7 @@ const MangaDetail = () => {
 
               {/* Description */}
               <div className="prose prose-sm max-w-none text-muted-foreground">
-                <p>{mockManga.description}</p>
+                <p>{manga.description}</p>
               </div>
             </div>
 
@@ -266,34 +274,40 @@ const MangaDetail = () => {
               <TabsContent value="chapters" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">All Chapters</h3>
-                  <span className="text-sm text-muted-foreground">{mockChapters.length} chapters</span>
+                  <span className="text-sm text-muted-foreground">{chapters.length} chapters</span>
                 </div>
                 
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {mockChapters.map((chapter) => (
-                    <Link
-                      key={chapter.id}
-                      to={`/manga/${slug}/chapter/${chapter.number}`}
-                      className="chapter-item flex items-center justify-between group"
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium group-hover:text-primary">
-                          Chapter {chapter.number}
-                          {chapter.title && ` - ${chapter.title}`}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(chapter.publishedAt).toLocaleDateString()}
-                        </div>
+                {chaptersLoading ? (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <div key={i} className="chapter-item animate-pulse">
+                        <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
                       </div>
-                      {chapter.readProgress > 0 && (
-                        <div className="text-sm text-primary">
-                          {chapter.readProgress}% read
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {chapters.map((chapter) => (
+                      <Link
+                        key={chapter.id}
+                        to={`/manga/${slug}/chapter/${chapter.chapter_number}`}
+                        className="chapter-item flex items-center justify-between group"
+                      >
+                        <div className="flex-1">
+                          <div className="font-medium group-hover:text-primary">
+                            Chapter {chapter.chapter_number}
+                            {chapter.title && ` - ${chapter.title}`}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(chapter.published_at || chapter.created_at).toLocaleDateString()}
+                          </div>
                         </div>
-                      )}
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-                    </Link>
-                  ))}
-                </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="comments" className="space-y-6">

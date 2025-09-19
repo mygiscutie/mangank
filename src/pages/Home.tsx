@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { useManga } from '@/hooks/useManga';
 import MangaCard from '@/components/manga/MangaCard';
 import Navbar from '@/components/layout/Navbar';
 import { 
@@ -13,53 +14,13 @@ import {
   Library
 } from 'lucide-react';
 
-// Mock data for demonstration
-const featuredManga = [
-  {
-    id: '1',
-    title: 'Tower of God',
-    slug: 'tower-of-god',
-    coverImage: '/placeholder.svg',
-    description: 'Reach the top, and everything will be yours. At the top of the tower exists everything in this world, and all of it can be yours.',
-    author: 'SIU',
-    status: 'ongoing' as const,
-    rating: 4.8,
-    viewCount: 2500000,
-    genres: ['Action', 'Adventure', 'Drama', 'Fantasy'],
-    latestChapter: 591
-  },
-  {
-    id: '2',
-    title: 'Solo Leveling',
-    slug: 'solo-leveling',
-    coverImage: '/placeholder.svg',
-    description: 'In a world where hunters battle monsters, Sung Jin-Woo is the weakest of the weak, but a mysterious system will change everything.',
-    author: 'Chugong',
-    status: 'completed' as const,
-    rating: 4.9,
-    viewCount: 5200000,
-    genres: ['Action', 'Adventure', 'Fantasy'],
-    latestChapter: 179
-  },
-  {
-    id: '3',
-    title: 'The Beginning After The End',
-    slug: 'the-beginning-after-the-end',
-    coverImage: '/placeholder.svg',
-    description: 'King Grey has unrivaled strength, wealth, and prestige in a world governed by martial ability, but solitude lingers closely behind those with great power.',
-    author: 'TurtleMe',
-    status: 'ongoing' as const,
-    rating: 4.7,
-    viewCount: 1800000,
-    genres: ['Action', 'Adventure', 'Fantasy', 'Magic'],
-    latestChapter: 165
-  }
-];
-
-const trendingManga = featuredManga.slice(0, 6);
-const latestManga = [...featuredManga].reverse();
-
 const Home = () => {
+  const { data: manga = [], isLoading } = useManga();
+  
+  const featuredManga = manga.slice(0, 3);
+  const trendingManga = manga.slice(0, 6);
+  const latestManga = [...manga].reverse().slice(0, 3);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -140,9 +101,33 @@ const Home = () => {
             </Button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredManga.map((manga) => (
-              <MangaCard key={manga.id} {...manga} />
-            ))}
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="manga-card animate-pulse">
+                  <div className="aspect-[3/4] bg-gray-300 rounded-lg mb-4"></div>
+                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-300 rounded w-2/3"></div>
+                </div>
+              ))
+            ) : (
+              featuredManga.map((item) => (
+                <MangaCard
+                  key={item.id}
+                  id={item.id}
+                  title={item.title}
+                  slug={item.slug}
+                  coverImage={item.cover_image_url}
+                  description={item.description}
+                  author={item.author}
+                  status={item.status}
+                  rating={item.rating}
+                  viewCount={item.view_count}
+                  genres={item.genres}
+                  isBookmarked={false}
+                  isFavorited={false}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -160,9 +145,33 @@ const Home = () => {
             </Button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-            {trendingManga.map((manga) => (
-              <MangaCard key={manga.id} {...manga} />
-            ))}
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="manga-card animate-pulse">
+                  <div className="aspect-[3/4] bg-gray-300 rounded-lg mb-4"></div>
+                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-300 rounded w-2/3"></div>
+                </div>
+              ))
+            ) : (
+              trendingManga.map((item) => (
+                <MangaCard
+                  key={item.id}
+                  id={item.id}
+                  title={item.title}
+                  slug={item.slug}
+                  coverImage={item.cover_image_url}
+                  description={item.description}
+                  author={item.author}
+                  status={item.status}
+                  rating={item.rating}
+                  viewCount={item.view_count}
+                  genres={item.genres}
+                  isBookmarked={false}
+                  isFavorited={false}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -180,9 +189,33 @@ const Home = () => {
             </Button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {latestManga.map((manga) => (
-              <MangaCard key={manga.id} {...manga} />
-            ))}
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="manga-card animate-pulse">
+                  <div className="aspect-[3/4] bg-gray-300 rounded-lg mb-4"></div>
+                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-300 rounded w-2/3"></div>
+                </div>
+              ))
+            ) : (
+              latestManga.map((item) => (
+                <MangaCard
+                  key={item.id}
+                  id={item.id}
+                  title={item.title}
+                  slug={item.slug}
+                  coverImage={item.cover_image_url}
+                  description={item.description}
+                  author={item.author}
+                  status={item.status}
+                  rating={item.rating}
+                  viewCount={item.view_count}
+                  genres={item.genres}
+                  isBookmarked={false}
+                  isFavorited={false}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>
