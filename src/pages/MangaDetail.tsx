@@ -31,7 +31,7 @@ const mockManga = {
   description: 'In a world where hunters battle deadly monsters that emerge from gates connecting our world to other dimensions, Sung Jin-Woo is known as the weakest E-rank hunter. Despite his low rank, he continues to hunt monsters to pay for his mother\'s medical bills. During a seemingly routine dungeon raid, Jin-Woo and his party discover a hidden dungeon. When they enter, they find themselves trapped in a deadly situation. Most of the party is killed, but Jin-Woo awakens to find that he has been chosen by a mysterious system that grants him the power to level up his abilities, strength, and skills.',
   author: 'Chugong',
   artist: 'DUBU (REDICE STUDIO)',
-  status: 'completed' as const,
+  status: 'completed' as 'completed' | 'ongoing' | 'hiatus' | 'cancelled',
   rating: 4.9,
   viewCount: 5200000,
   genres: ['Action', 'Adventure', 'Fantasy', 'Supernatural', 'Webtoon'],
@@ -230,7 +230,7 @@ const MangaDetail = () => {
               <div className="flex flex-wrap items-center gap-2 mb-4">
                 <Badge 
                   variant="secondary"
-                  className={mockManga.status === 'ongoing' ? 'bg-green-500' : 'bg-blue-500'}
+                  className={mockManga.status === 'ongoing' ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'}
                 >
                   {mockManga.status}
                 </Badge>
