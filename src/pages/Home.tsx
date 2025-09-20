@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useManga } from '@/hooks/useManga';
+import { useManga } from '@/hooks/useMangaDx';
 import MangaCard from '@/components/manga/MangaCard';
 import Navbar from '@/components/layout/Navbar';
 import { 
@@ -116,12 +116,12 @@ const Home = () => {
                   id={item.id}
                   title={item.title}
                   slug={item.slug}
-                  coverImage={item.cover_image_url}
+                  coverImage={item.coverImageUrl}
                   description={item.description}
                   author={item.author}
                   status={item.status}
                   rating={item.rating}
-                  viewCount={item.view_count}
+                  viewCount={item.viewCount}
                   genres={item.genres}
                   isBookmarked={false}
                   isFavorited={false}
@@ -160,12 +160,12 @@ const Home = () => {
                   id={item.id}
                   title={item.title}
                   slug={item.slug}
-                  coverImage={item.cover_image_url}
+                  coverImage={item.coverImageUrl}
                   description={item.description}
                   author={item.author}
                   status={item.status}
                   rating={item.rating}
-                  viewCount={item.view_count}
+                  viewCount={item.viewCount}
                   genres={item.genres}
                   isBookmarked={false}
                   isFavorited={false}
@@ -204,12 +204,12 @@ const Home = () => {
                   id={item.id}
                   title={item.title}
                   slug={item.slug}
-                  coverImage={item.cover_image_url}
+                  coverImage={item.coverImageUrl}
                   description={item.description}
                   author={item.author}
                   status={item.status}
                   rating={item.rating}
-                  viewCount={item.view_count}
+                  viewCount={item.viewCount}
                   genres={item.genres}
                   isBookmarked={false}
                   isFavorited={false}

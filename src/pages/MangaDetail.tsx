@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Navbar from '@/components/layout/Navbar';
-import { useMangaBySlug, useChaptersByManga } from '@/hooks/useManga';
+import { useMangaBySlug, useChaptersByManga } from '@/hooks/useMangaDx';
 import { 
   Heart, 
   Bookmark, 
@@ -177,7 +177,7 @@ const MangaDetail = () => {
             <div className="manga-card">
               <div className="aspect-[3/4] overflow-hidden">
                 <img
-                  src={manga.cover_image_url || '/placeholder.svg'}
+                  src={manga.coverImageUrl || '/placeholder.svg'}
                   alt={manga.title}
                   className="w-full h-full object-cover"
                 />
@@ -226,7 +226,7 @@ const MangaDetail = () => {
                 {manga.artist && <span>Art by {manga.artist}</span>}
                 <div className="flex items-center gap-1">
                   <Eye className="h-4 w-4" />
-                  <span>{manga.view_count?.toLocaleString()} views</span>
+                  <span>{manga.viewCount?.toLocaleString()} views</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
@@ -245,7 +245,7 @@ const MangaDetail = () => {
                 <Badge variant="outline">{chapters.length} chapters</Badge>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  <span>Updated {new Date(manga.updated_at).toLocaleDateString()}</span>
+                  <span>Updated {new Date(manga.updatedAt).toLocaleDateString()}</span>
                 </div>
               </div>
 
@@ -291,16 +291,16 @@ const MangaDetail = () => {
                     {chapters.map((chapter) => (
                       <Link
                         key={chapter.id}
-                        to={`/manga/${slug}/chapter/${chapter.chapter_number}`}
+                        to={`/manga/${slug}/chapter/${chapter.chapterNumber}`}
                         className="chapter-item flex items-center justify-between group"
                       >
                         <div className="flex-1">
                           <div className="font-medium group-hover:text-primary">
-                            Chapter {chapter.chapter_number}
+                            Chapter {chapter.chapterNumber}
                             {chapter.title && ` - ${chapter.title}`}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {new Date(chapter.published_at || chapter.created_at).toLocaleDateString()}
+                            {new Date(chapter.publishedAt || chapter.createdAt).toLocaleDateString()}
                           </div>
                         </div>
                         <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary" />

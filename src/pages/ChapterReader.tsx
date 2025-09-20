@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useChapter } from '@/hooks/useManga';
+import { useChapter, useChapterPages } from '@/hooks/useMangaDx';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -15,26 +15,6 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-const mockChapter = {
-  id: 'ch-1',
-  number: 1,
-  title: 'The World\'s Weakest Hunter',
-  manga: {
-    id: '1',
-    title: 'Solo Leveling',
-    slug: 'solo-leveling'
-  },
-  pages: [
-    '/placeholder.svg?height=800&width=600&text=Page+1',
-    '/placeholder.svg?height=800&width=600&text=Page+2',
-    '/placeholder.svg?height=800&width=600&text=Page+3',
-    '/placeholder.svg?height=800&width=600&text=Page+4',
-    '/placeholder.svg?height=800&width=600&text=Page+5',
-    '/placeholder.svg?height=800&width=600&text=Page+6',
-    '/placeholder.svg?height=800&width=600&text=Page+7',
-    '/placeholder.svg?height=800&width=600&text=Page+8',
-  ]
-};
 
 const ChapterReader = () => {
   const { slug, chapterNumber } = useParams();
@@ -44,6 +24,7 @@ const ChapterReader = () => {
   const [readingMode, setReadingMode] = useState<'vertical' | 'horizontal'>('vertical');
   
   const { data, isLoading, error } = useChapter(slug!, parseInt(chapterNumber!));
+  const { data: pages = [], isLoading: pagesLoading } = useChapterPages(data?.chapter?.id || '');
   
   if (error) {
     return (
@@ -61,7 +42,7 @@ const ChapterReader = () => {
     );
   }
 
-  if (isLoading || !data) {
+  if (isLoading || pagesLoading || !data) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
@@ -71,12 +52,11 @@ const ChapterReader = () => {
 
   const { chapter, manga } = data;
   
-  // Create mock pages based on chapter pages_count
-  const pages = Array.from({ length: chapter.pages_count || 20 }, (_, i) => 
-    `${chapter.content_url}?page=${i + 1}&w=800&h=1200&fit=crop`
+  // Use real pages from MangaDx API or fallback to mock pages
+  const totalPages = pages.length || chapter.pagesCount || 20;
+  const chapterPages = pages.length > 0 ? pages : Array.from({ length: totalPages }, (_, i) => 
+    `${chapter.contentUrl}?page=${i + 1}&w=800&h=1200&fit=crop`
   );
-  
-  const totalPages = pages.length;
   const progress = (currentPage / totalPages) * 100;
 
   useEffect(() => {
@@ -164,7 +144,7 @@ const ChapterReader = () => {
             <div className="text-sm">
               <div className="font-semibold">{manga.title}</div>
               <div className="text-white/70">
-                Chapter {chapter.chapter_number}
+                Chapter {chapter.chapterNumber}
                 {chapter.title && ` - ${chapter.title}`}
               </div>
             </div>
@@ -193,13 +173,17 @@ const ChapterReader = () => {
         {readingMode === 'vertical' ? (
           // Vertical scrolling mode
           <div className="max-w-4xl mx-auto">
-            {pages.map((page, index) => (
+            {chapterPages.map((page, index) => (
               <div key={index} className="mb-2">
                 <img
                   src={page}
                   alt={`Page ${index + 1}`}
                   className="w-full h-auto"
                   loading="lazy"
+                  onError={(e) => {
+                    // Fallback to placeholder if image fails to load
+                    e.currentTarget.src = '/placeholder.svg?height=800&width=600&text=Page+' + (index + 1);
+                  }}
                 />
               </div>
             ))}
@@ -208,10 +192,14 @@ const ChapterReader = () => {
           // Horizontal page-by-page mode
           <div className="flex items-center justify-center min-h-screen">
             <img
-              src={pages[currentPage - 1]}
+              src={chapterPages[currentPage - 1]}
               alt={`Page ${currentPage}`}
               className="max-h-[90vh] max-w-full object-contain cursor-pointer"
               onClick={handleImageClick}
+              onError={(e) => {
+                // Fallback to placeholder if image fails to load
+                e.currentTarget.src = '/placeholder.svg?height=800&width=600&text=Page+' + currentPage;
+              }}
             />
           </div>
         )}
