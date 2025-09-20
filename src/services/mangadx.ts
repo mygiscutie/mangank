@@ -1,4 +1,6 @@
-const MANGADX_BASE_URL = 'https://yogbwckwkbqcltaamevn.supabase.co/functions/v1/mangadx-proxy';
+// Use a public CORS proxy for now - replace with your own later
+const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+const MANGADX_BASE_URL = 'https://api.mangadx.org';
 
 export interface MangaDxManga {
   id: string;
@@ -74,20 +76,43 @@ export interface MangaDxAtHome {
 
 export class MangaDxService {
   private static async request<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
-    const url = new URL(MANGADX_BASE_URL);
-    url.searchParams.set('path', endpoint);
-    
-    if (params) {
-      url.searchParams.set('params', JSON.stringify(params));
-    }
+    try {
+      const url = new URL(endpoint, MANGADX_BASE_URL);
+      
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach(v => url.searchParams.append(key, v));
+          } else if (value !== undefined && value !== null) {
+            url.searchParams.append(key, value.toString());
+          }
+        });
+      }
 
-    const response = await fetch(url.toString());
-    
-    if (!response.ok) {
-      throw new Error(`MangaDx API error: ${response.status} ${response.statusText}`);
+      // Use CORS proxy to bypass CORS issues
+      const proxyUrl = CORS_PROXY + encodeURIComponent(url.toString());
+      
+      console.log(`Fetching from MangaDx: ${url.toString()}`);
+
+      const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('MangaDx API response:', data);
+      
+      return data;
+    } catch (error) {
+      console.error('MangaDx API Error:', error);
+      throw error;
     }
-    
-    return response.json();
   }
 
   static async searchManga(title: string, limit = 20): Promise<{ data: MangaDxManga[] }> {
@@ -133,13 +158,20 @@ export class MangaDxService {
   }
 
   static async getCoverUrl(coverId: string, mangaId: string, size: 'small' | 'medium' | 'large' = 'medium'): Promise<string> {
-    // MangaDx cover URLs follow this pattern
-    const sizeMap = {
-      small: '256.jpg',
-      medium: '512.jpg', 
-      large: '.jpg'
-    };
-    return `https://uploads.mangadx.org/covers/${mangaId}/${coverId}${sizeMap[size]}`;
+    try {
+      const sizeMap = {
+        small: '256.jpg',
+        medium: '512.jpg', 
+        large: '.jpg'
+      };
+      const coverUrl = `https://uploads.mangadx.org/covers/${mangaId}/${coverId}${sizeMap[size]}`;
+      
+      // Use CORS proxy for cover images too
+      return CORS_PROXY + encodeURIComponent(coverUrl);
+    } catch (error) {
+      console.error('Error getting cover URL:', error);
+      return '/placeholder.svg?height=600&width=400&text=No+Cover';
+    }
   }
 
   static getTitle(manga: MangaDxManga, language = 'en'): string {

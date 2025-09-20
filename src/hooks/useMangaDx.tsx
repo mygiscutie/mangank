@@ -45,38 +45,124 @@ export const usePopularManga = () => {
   return useQuery({
     queryKey: ['manga', 'popular'],
     queryFn: async (): Promise<TransformedManga[]> => {
-      const response = await MangaDxService.getMangaByIds(POPULAR_MANGA_IDS);
-      
-      const transformedManga = await Promise.all(
-        response.data.map(async (manga: MangaDxManga): Promise<TransformedManga> => {
-          const coverArt = MangaDxService.getCoverArt(manga);
-          const coverImageUrl = coverArt 
-            ? await MangaDxService.getCoverUrl(coverArt, manga.id, 'medium')
-            : '/placeholder.svg';
-          
-          return {
-            id: manga.id,
-            title: MangaDxService.getTitle(manga),
-            slug: MangaDxService.createSlug(manga),
-            description: MangaDxService.getDescription(manga),
-            author: MangaDxService.getAuthor(manga),
-            artist: MangaDxService.getArtist(manga),
-            status: manga.attributes.status,
-            coverImageUrl,
-            rating: Math.floor(Math.random() * 2) + 4, // Mock rating 4-5
-            viewCount: Math.floor(Math.random() * 100000) + 10000, // Mock view count
-            genres: MangaDxService.getGenres(manga),
-            createdAt: manga.attributes.createdAt,
-            updatedAt: manga.attributes.updatedAt
-          };
-        })
-      );
-      
-      return transformedManga;
+      try {
+        console.log('Fetching popular manga from MangaDx...');
+        const response = await MangaDxService.getMangaByIds(POPULAR_MANGA_IDS);
+        console.log('MangaDx response:', response);
+        
+        if (!response.data || response.data.length === 0) {
+          throw new Error('No manga data received');
+        }
+        
+        const transformedManga = await Promise.all(
+          response.data.map(async (manga: MangaDxManga): Promise<TransformedManga> => {
+            try {
+              const coverArt = MangaDxService.getCoverArt(manga);
+              let coverImageUrl = '/placeholder.svg?height=600&width=400&text=No+Cover';
+              
+              if (coverArt) {
+                coverImageUrl = await MangaDxService.getCoverUrl(coverArt, manga.id, 'medium');
+              }
+              
+              return {
+                id: manga.id,
+                title: MangaDxService.getTitle(manga),
+                slug: MangaDxService.createSlug(manga),
+                description: MangaDxService.getDescription(manga),
+                author: MangaDxService.getAuthor(manga),
+                artist: MangaDxService.getArtist(manga),
+                status: manga.attributes.status,
+                coverImageUrl,
+                rating: Math.floor(Math.random() * 2) + 4, // Mock rating 4-5
+                viewCount: Math.floor(Math.random() * 100000) + 10000, // Mock view count
+                genres: MangaDxService.getGenres(manga),
+                createdAt: manga.attributes.createdAt,
+                updatedAt: manga.attributes.updatedAt
+              };
+            } catch (error) {
+              console.error('Error transforming manga:', error);
+              // Return a fallback manga object
+              return {
+                id: manga.id,
+                title: MangaDxService.getTitle(manga),
+                slug: MangaDxService.createSlug(manga),
+                description: 'Description not available',
+                author: 'Unknown Author',
+                artist: 'Unknown Artist', 
+                status: manga.attributes.status,
+                coverImageUrl: '/placeholder.svg?height=600&width=400&text=No+Cover',
+                rating: 4.5,
+                viewCount: 50000,
+                genres: ['Action'],
+                createdAt: manga.attributes.createdAt,
+                updatedAt: manga.attributes.updatedAt
+              };
+            }
+          })
+        );
+        
+        return transformedManga;
+      } catch (error) {
+        console.error('Failed to fetch popular manga:', error);
+        // Return mock data as fallback
+        return getMockMangaData();
+      }
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
+    retry: 2,
   });
 };
+
+// Fallback mock data when API fails
+function getMockMangaData(): TransformedManga[] {
+  return [
+    {
+      id: '1',
+      title: 'Solo Leveling',
+      slug: 'solo-leveling',
+      description: 'In a world where hunters battle deadly monsters that emerge from gates connecting our world to other dimensions, Sung Jin-Woo is known as the weakest E-rank hunter.',
+      author: 'Chugong',
+      artist: 'DUBU (REDICE STUDIO)',
+      status: 'completed',
+      coverImageUrl: 'https://images.unsplash.com/photo-1626618012641-bfbca5031651?w=400&h=600&fit=crop',
+      rating: 4.9,
+      viewCount: 12000000,
+      genres: ['Action', 'Adventure', 'Fantasy', 'Supernatural'],
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z'
+    },
+    {
+      id: '2',
+      title: 'Tower of God',
+      slug: 'tower-of-god',
+      description: 'Tower of God centers around a boy called Twenty-fifth Bam, who has spent most of his life trapped beneath a vast and mysterious Tower.',
+      author: 'SIU',
+      artist: 'SIU',
+      status: 'ongoing',
+      coverImageUrl: 'https://images.unsplash.com/photo-1541963463532-d68292c34d19?w=400&h=600&fit=crop',
+      rating: 4.8,
+      viewCount: 8500000,
+      genres: ['Action', 'Adventure', 'Drama', 'Fantasy'],
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z'
+    },
+    {
+      id: '3',
+      title: 'The Beginning After The End',
+      slug: 'the-beginning-after-the-end',
+      description: 'King Grey has unrivaled strength, wealth, and prestige in a world governed by martial ability.',
+      author: 'TurtleMe',
+      artist: 'Fuyuki23',
+      status: 'ongoing',
+      coverImageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=600&fit=crop',
+      rating: 4.7,
+      viewCount: 6500000,
+      genres: ['Action', 'Adventure', 'Fantasy', 'Magic'],
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z'
+    }
+  ];
+}
 
 export const useMangaSearch = (query: string) => {
   return useQuery({
