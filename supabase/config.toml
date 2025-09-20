@@ -1,1 +1,4 @@
 project_id = "yogbwckwkbqcltaamevn"
+
+[functions.mangadx-proxy]
+verify_jwt = false

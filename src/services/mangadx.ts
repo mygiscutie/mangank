@@ -1,4 +1,4 @@
-const MANGADX_BASE_URL = 'https://api.mangadx.org';
+const MANGADX_BASE_URL = 'https://yogbwckwkbqcltaamevn.supabase.co/functions/v1/mangadx-proxy';
 
 export interface MangaDxManga {
   id: string;
@@ -74,16 +74,11 @@ export interface MangaDxAtHome {
 
 export class MangaDxService {
   private static async request<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
-    const url = new URL(endpoint, MANGADX_BASE_URL);
+    const url = new URL(MANGADX_BASE_URL);
+    url.searchParams.set('path', endpoint);
     
     if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-          value.forEach(v => url.searchParams.append(key, v));
-        } else if (value !== undefined && value !== null) {
-          url.searchParams.append(key, value.toString());
-        }
-      });
+      url.searchParams.set('params', JSON.stringify(params));
     }
 
     const response = await fetch(url.toString());
